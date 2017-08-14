@@ -79,10 +79,48 @@ class SelectorBIC(ModelSelector):
         """
         # TODO implement model selection based on BIC scores
 
+        # Store a list of BIC's
+        BICs = []
 
+        # Apparently there are errors in the data
+        try:
 
+            # For each "N" in our component list:
+            for n in self.components:
 
-        return BIC
+                # Grab the base model:
+                base_model = self.base_model(n)
+
+                # Grab the model's score (LD / LogL):
+                ld = model.score(self.X, self.lengths)
+
+                # Grab the model n features to calculate parameters later:
+                model_features = model.n_features
+
+                # Calculate number of parameters:
+                num_params = (n ** 2) + ((2 * (model_features - 1) * n ))
+
+                # Get BIC using equation:
+                BIC = (-2 * ld) + (num_params * math.log(n))
+
+                BICs.append(BIC)
+
+        # error deal
+        except Exception as error:
+            pass
+
+        # Generating output
+        # Sometimes we have no BICs list
+        if BICs:
+
+            # Get out maximum BIC
+            output = n_components[np.argmax(BICs)]
+
+        else:
+            output = self.n_constant
+
+        return self.base_model(output)
+
 
 
 
