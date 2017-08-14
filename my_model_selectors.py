@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 from hmmlearn.hmm import GaussianHMM
 from sklearn.model_selection import KFold
+# lol
 from asl_utils import combine_sequences
 
 
@@ -66,6 +67,8 @@ class SelectorBIC(ModelSelector):
 
     http://www2.imm.dtu.dk/courses/02433/doc/ch6_slides.pdf
     Bayesian information criteria: BIC = -2 * logL + p * logN
+    Akaike information criteria: AIC = -2 * logL + 2 * p
+    Better model < less better model
     """
 
     def select(self):
@@ -74,10 +77,13 @@ class SelectorBIC(ModelSelector):
 
         :return: GaussianHMM object
         """
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-
         # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+
+
+
+
+        return BIC
+
 
 
 class SelectorDIC(ModelSelector):
