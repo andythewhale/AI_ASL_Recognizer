@@ -136,8 +136,59 @@ class SelectorDIC(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        # We need to store a blank list for our DIC's
+        DICs = []
+
+        # We need our list of likelihoods now because they change
+        lds = []
+
+        # So for the rest of this we solve it the same way we solved the BICs
+        # We just use a different equation.
+
+        # Of course we need to try again.
+        try:
+
+            # Copy paste with new equation and reformat:
+            for n in self.n_components:
+
+                # Base model
+                base_model = self.base_model(n)
+
+                # Append to lds:
+                lds.append(model.score(self.X, self.lengths))
+
+            # We sum the current list of likelihoods.
+            sum_lds = sum(lds)
+
+            # get the length of n_components
+            length_n_components = len(self.n_components)
+
+            # Then we do a loop over our current list of likelihoods:
+            for ld in lds:
+
+                # Find the likelihoods of the other words:
+                lds_else = (sum_lds - ld) / (length_n_components - 1)
+
+                # Now we can get our DIC and append it.
+                DICs.append(ld - lds_else)
+
+        # Let's grab the exception:
+        except Exception as error:
+            pass
+
+
+        if DICs
+            output = self.base_model(self.n_components[np.argmax(DICs)])
+
+        else
+            output = self.n_constant
+
+
+        return output
+
+
+
+
 
 
 class SelectorCV(ModelSelector):
