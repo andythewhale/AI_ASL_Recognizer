@@ -177,10 +177,10 @@ class SelectorDIC(ModelSelector):
             pass
 
 
-        if DICs
+        if DICs:
             output = self.base_model(self.n_components[np.argmax(DICs)])
 
-        else
+        else:
             output = self.n_constant
 
 
