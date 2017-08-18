@@ -8,7 +8,6 @@ from sklearn.model_selection import KFold
 # lol
 from asl_utils import combine_sequences
 
-
 class ModelSelector(object):
     '''
     base class for model selection (strategy design pattern)
@@ -26,6 +25,8 @@ class ModelSelector(object):
         self.n_constant = n_constant
         self.min_n_components = min_n_components
         self.max_n_components = max_n_components
+        # This would be more helpful:
+        self.n_components = range(self.min_n_components, self.max_n_components + 1)
         self.random_state = random_state
         self.verbose = verbose
 
@@ -86,13 +87,13 @@ class SelectorBIC(ModelSelector):
         try:
 
             # For each "N" in our component list:
-            for n in self.components:
+            for n in self.n_components:
 
                 # Grab the base model:
-                base_model = self.base_model(n)
+                base_mod = self.base_model(n)
 
                 # Grab the model's score (LD / LogL):
-                ld = model.score(self.X, self.lengths)
+                ld = base_mod.score(self.X, self.lengths)
 
                 # Grab the model n features to calculate parameters later:
                 model_features = model.n_features
@@ -181,7 +182,7 @@ class SelectorDIC(ModelSelector):
             output = self.base_model(self.n_components[np.argmax(DICs)])
 
         else:
-            output = self.n_constant
+            output = self.base_model(n_constant)
 
 
         return output
@@ -197,7 +198,70 @@ class SelectorCV(ModelSelector):
     '''
 
     def select(self):
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        # So for this we need to select the best model
+        # The best model has the highest mean value
+        # But we need to create a list for that value
+
+        # Make a blank list with no values:
+        mean_values = []
+
+        # This is given, this is not mine:
+        split_method = KFold()
+
+        # Try again
+        try:
+
+            # For each n in n components:
+            for n in self.n_components:
+
+                # We get the base model
+                base_mod = self.base_model(n)
+
+                # We need to make a loop within the loop to calculate the value
+                # of each fold:
+
+                # Blank fold value list:
+                fold_values = []
+
+                # We need to get the test sequences.
+                # We'll only be interested in j here to recombine
+                # the sequence after splitting the originals
+
+                # I got this from the asl_recognizer, it is not my idea:
+
+                """
+                **Tip:** In order to run `hmmlearn` training using the X,lengths tuples on the new folds, 
+                subsets must be combined based on the indices given for the folds.  A helper utility has been 
+                provided in the `asl_utils` module named `combine_sequences` for this purpose.
+                """
+                for i, j in split_method.split(self.sequences):
+
+                    # I mentioned this above
+                    x, length = combine_sequences(j, self.sequences)
+
+                    # Now we can just append to the fold values
+                    fold_values.append(base_mod.score(x, length))
+
+                # Now we can just append the mean values using the mean of the fold values
+                mean_values.append(np.mean(fold_values))
+
+        # exception
+        except Exception as error:
+            pass
+
+        # Same scenario as the DICs
+        if mean_values:
+            output = self.base_model(self.n_components[np.argmax(mean_values)])
+
+        else:
+            output = self.base_model(self.n_constant)
+
+        return output
+
+
+
+
+
+
+
