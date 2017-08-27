@@ -83,11 +83,12 @@ class SelectorBIC(ModelSelector):
         # Store a list of BIC's
         BICs = []
 
-        # Apparently there are errors in the data
-        try:
 
-            # For each "N" in our component list:
-            for n in self.n_components:
+        # For each "N" in our component list:
+        for n in self.n_components:
+
+            # Apparently there are errors in the data
+            try:
 
                 # Grab the base model:
                 base_mod = self.base_model(n)
@@ -106,16 +107,16 @@ class SelectorBIC(ModelSelector):
 
                 BICs.append(BIC)
 
-        # error deal
-        except Exception as error:
-            pass
+            # error deal
+            except Exception as error:
+                pass
 
         # Generating output
         # Sometimes we have no BICs list
         if BICs:
 
             # Get out maximum BIC
-            output = n_components[np.argmax(BICs)]
+            output = n_components[np.argmin(BICs)]
 
         else:
             output = self.n_constant
@@ -137,58 +138,45 @@ class SelectorDIC(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # We need to store a blank list for our DIC's
-        DICs = []
-
-        # We need our list of likelihoods now because they change
-        lds = []
-
-        # So for the rest of this we solve it the same way we solved the BICs
-        # We just use a different equation.
-
-        # Of course we need to try again.
+        # A grader helped me with this code with some suggestions.
         try:
+            # Create best_dic & model fillers
+            best_dic = float("-Inf")
+            best_model = None
 
-            # Copy paste with new equation and reformat:
+            # Begin for loop to go over items in n_components
             for n in self.n_components:
 
-                # Base model
-                base_mod = self.base_model(n)
+                # Grab the model for this step
+                model = self.base_model(n)
 
-                # Append to lds:
-                lds.append(model.score(self.X, self.lengths))
+                # Grab the LogL for this model
+                log_L = model.score(self.X, self.lengths)
 
-            # We sum the current list of likelihoods.
-            sum_lds = sum(lds)
+                # Getting the penalty
+                """
+                This needs a little bit more explanation.
+                It is a list comprehension statement that looks through the mean score
+                Each word is evaluated as long as it is not equal to the current word.
+                """
+                penalty = np.mean([model.score(self.hwords[word]) for word in self.words if word != self.this_word])
 
-            # get the length of n_components
-            length_n_components = len(self.n_components)
+                #Calculate DIC
+                dic = log_L - penalty
 
-            # Then we do a loop over our current list of likelihoods:
-            for ld in lds:
+                #If it's better than our current best score then it becomes the best score.
+                if dic > best_dic:
+                    best_model = model
+                    best_dic = dic
 
-                # Find the likelihoods of the other words:
-                lds_else = (sum_lds - ld) / (length_n_components - 1)
+            # Return our best model
+            return best_model
 
-                # Now we can get our DIC and append it.
-                DICs.append(ld - lds_else)
-
-        # Let's grab the exception:
         except Exception as error:
-            pass
 
+            best_model = self.base_model(self.n_constant)
 
-        if DICs:
-            output = self.base_model(self.n_components[np.argmax(DICs)])
-
-        else:
-            output = self.base_model(self.n_constant)
-
-
-        return output
-
-
-
+            return best_model
 
 
 
@@ -238,10 +226,13 @@ class SelectorCV(ModelSelector):
                 for i, j in split_method.split(self.sequences):
 
                     # I mentioned this above
-                    x, length = combine_sequences(j, self.sequences)
+                    x, length = combine_sequences(i, self.sequences)
+
+                    # This gets our model data.
+                    model = GaussianHMM(n_components = num_states, covariance_type = "diag", n_iter = 1000, random_state = self.random_state, verbose = False).fit(x, length)
 
                     # Now we can just append to the fold values
-                    fold_values.append(base_mod.score(x, length))
+                    fold_values.append(model.score(x, length))
 
                 # Now we can just append the mean values using the mean of the fold values
                 mean_values.append(np.mean(fold_values))
