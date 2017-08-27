@@ -153,7 +153,7 @@ class SelectorDIC(ModelSelector):
             for n in self.n_components:
 
                 # Base model
-                base_model = self.base_model(n)
+                base_mod = self.base_model(n)
 
                 # Append to lds:
                 lds.append(model.score(self.X, self.lengths))
@@ -182,7 +182,7 @@ class SelectorDIC(ModelSelector):
             output = self.base_model(self.n_components[np.argmax(DICs)])
 
         else:
-            output = self.base_model(n_constant)
+            output = self.base_model(self.n_constant)
 
 
         return output

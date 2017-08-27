@@ -1,6 +1,5 @@
 import warnings
 from asl_data import SinglesData
-from asl_utils import *
 
 def recognize(models: dict, test_set: SinglesData):
     """ Recognize test word sequences from word models set
@@ -23,6 +22,8 @@ def recognize(models: dict, test_set: SinglesData):
 
     # Create blank lists for probabilities and X's
     probabilities = []
+
+    # Needs to be guesses as per utils, this confused me for a bit.
     guesses = []
 
     # So what we're going to do is get the list of x lengths.
@@ -32,14 +33,14 @@ def recognize(models: dict, test_set: SinglesData):
     # Then we iterate over the x values and their corresponding lengths:
     for x, length in x_lengths.values():
 
-        # save a blank dictionary of the liklihood score:
+        # save a blank dictionary of the likelihood score:
         ld = {}
 
         # store minimum possible score to save max score later:
         current_best_score = float('-inf')
 
         # store the highest probability word, keep n/a for start.
-        current_best_word = 'n/a'
+        current_best_word = None
 
         # Then we iterate over the word and the model that we developed for each word.
         # The information is stored in models within items.
@@ -48,11 +49,11 @@ def recognize(models: dict, test_set: SinglesData):
             # Try was added because some words don't have a return.
             try:
 
-            # We label the score
-            score = model.score(x, length)
+                # We label the score
+                score = model.score(x, length)
 
-            # we label the blank dictionary
-            ld[word] = score
+                # we label the blank dictionary
+                ld[word] = score
 
                 # if the word's score is greater than our current max score
                 if score > current_best_score:
@@ -64,7 +65,13 @@ def recognize(models: dict, test_set: SinglesData):
             # Exception for when we have no response.
             except:
 
-                # When we have no response the liklihood is infinitely low.
-                ld['word'] = float('-inf')
+                # When we have no response the likelihood is infinitely low.
+                # I also had word as 'word' need to remember to not do that.
+                ld[word] = float('-inf')
+
+        # I messed this up very badly before I got it.
+        guesses.append(current_best_word)
+        probabilities.append(ld)
 
 
+    return probabilities, guesses

@@ -7,6 +7,7 @@ GROUND_FEATURES = ['grnd-rx', 'grnd-ry', 'grnd-lx', 'grnd-ly']
 
 
 def show_errors(guesses: list, test_set: SinglesData):
+
     """ Print WER and sentence differences in tabular form
 
     :param guesses: list of test item answers, ordered
@@ -16,6 +17,7 @@ def show_errors(guesses: list, test_set: SinglesData):
 
     WER = (S+I+D)/N  but we have no insertions or deletions for isolated words so WER = S/N
     """
+
     S = 0
     N = len(test_set.wordlist)
     num_test_words = len(test_set.wordlist)
@@ -53,8 +55,7 @@ def train_all_words(training: WordsData, model_selector):
     Xlengths = training.get_all_Xlengths()
     model_dict = {}
     for word in training.words:
-        model = model_selector(sequences, Xlengths, word,
-                               n_constant=3).select()
+        model = model_selector(sequences, Xlengths, word, n_constant =3).select()
         model_dict[word] = model
     return model_dict
 
